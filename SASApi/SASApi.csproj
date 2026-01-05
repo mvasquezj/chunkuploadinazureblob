@@ -4,9 +4,11 @@
         <TargetFramework>net10.0</TargetFramework>
         <Nullable>enable</Nullable>
         <ImplicitUsings>enable</ImplicitUsings>
+        <UserSecretsId>1a76afee-baa9-4db2-8688-2e69540343fc</UserSecretsId>
     </PropertyGroup>
 
     <ItemGroup>
+        <PackageReference Include="Azure.Identity" Version="1.17.1" />
         <PackageReference Include="Azure.Storage.Blobs" Version="12.26.0" />
         <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="10.0.0"/>
     </ItemGroup>
