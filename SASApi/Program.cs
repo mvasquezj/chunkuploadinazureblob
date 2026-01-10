@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Mvc;
 using SASApi;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -7,6 +8,16 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddOpenApi();
 builder.Services.AddBlobService();
 builder.Services.AddSingleton<SasService>();
+
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowAll", policy =>
+    {
+        policy.AllowAnyOrigin()
+              .AllowAnyHeader()
+              .AllowAnyMethod();
+    });
+});
 
 builder.Services.AddProblemDetails();
 
@@ -22,7 +33,10 @@ app.UseDeveloperExceptionPage();
 
 app.UseHttpsRedirection();
 
-app.MapPost("/api/sas", async (SasService sasService) => await sasService.GetContainerSasToken("data"))
+app.UseCors("AllowAll");
+
+app.MapPost("/api/sas", async ([FromBody] FileData fileData, SasService sasService) => 
+    await sasService.GetContainerSasToken((fileData)))
 .WithName("SAS");
 
 app.Run();

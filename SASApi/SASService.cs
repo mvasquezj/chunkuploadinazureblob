@@ -9,12 +9,14 @@ public sealed class SasService
 {
     private readonly BlobServiceClient _blobServiceClient;
     private static UserDelegationKey? _userDelegationKey;
+    private readonly IConfiguration _config;
     private const int UserDelegationDurationInMinutes = 60;
     private const int UserDelegationGracePeriodInMinutes = -10;
-    private const int SasTokenDurationInMinutes = 2;
-    public SasService(BlobServiceClient blobServiceClient)
+    private const int SasTokenDurationInMinutes = 60;
+    public SasService(BlobServiceClient blobServiceClient, IConfiguration config)
     {
         _blobServiceClient = blobServiceClient;
+        _config = config;
     }
 
     private async Task GetUserDelegationKey()
@@ -33,27 +35,32 @@ public sealed class SasService
         }
     }
 
-    public async Task<string?> GetContainerSasToken(string containerName)
+    public async Task<string?> GetContainerSasToken(FileData fileData)
     {
-        var containerClient = _blobServiceClient.GetBlobContainerClient(containerName);
+        var containerClient = _blobServiceClient.GetBlobContainerClient("data");
 
         await GetUserDelegationKey();
         
         var sasBuilder = new BlobSasBuilder
         {
             BlobContainerName = containerClient.Name,
-            Resource = "c",
-            StartsOn = DateTimeOffset.UtcNow,
+            BlobName = fileData.BlobName,
+            Resource = "b",
+            StartsOn = DateTimeOffset.UtcNow.AddMinutes(-5),
             ExpiresOn = DateTimeOffset.UtcNow.AddMinutes(SasTokenDurationInMinutes)
         };
 
-        sasBuilder.SetPermissions(BlobContainerSasPermissions.Create);
-        var uriBuilder = new BlobUriBuilder(containerClient.Uri)
-        {
-            Sas = sasBuilder.ToSasQueryParameters(
-                _userDelegationKey,
-                containerClient.GetParentBlobServiceClient().AccountName)
-        };
-        return uriBuilder.ToUri().AbsoluteUri;
+        sasBuilder.SetPermissions(BlobSasPermissions.Write | BlobSasPermissions.Create);
+        
+        string sasToken = sasBuilder.ToSasQueryParameters(_userDelegationKey, 
+            containerClient.AccountName).ToString();
+        
+        // var uriBuilder = new BlobUriBuilder(containerClient.Uri)
+        // {
+        //     Sas = sasBuilder.ToSasQueryParameters(
+        //         _userDelegationKey,
+        //         containerClient.GetParentBlobServiceClient().AccountName)
+        // };
+        return $"{_config["BlobStorage:Url"]}data/{fileData.BlobName}?{sasToken}";
     }
 }
