@@ -1,6 +1,5 @@
 using Azure.Storage.Blobs;
 using Azure.Storage.Blobs.Models;
-using Azure.Storage.Blobs.Specialized;
 using Azure.Storage.Sas;
 
 namespace SASApi;
@@ -12,7 +11,7 @@ public sealed class SasService
     private readonly IConfiguration _config;
     private const int UserDelegationDurationInMinutes = 60;
     private const int UserDelegationGracePeriodInMinutes = -10;
-    private const int SasTokenDurationInMinutes = 60;
+    private const int SasTokenDurationInMinutes = 10;
     public SasService(BlobServiceClient blobServiceClient, IConfiguration config)
     {
         _blobServiceClient = blobServiceClient;
@@ -55,12 +54,6 @@ public sealed class SasService
         string sasToken = sasBuilder.ToSasQueryParameters(_userDelegationKey, 
             containerClient.AccountName).ToString();
         
-        // var uriBuilder = new BlobUriBuilder(containerClient.Uri)
-        // {
-        //     Sas = sasBuilder.ToSasQueryParameters(
-        //         _userDelegationKey,
-        //         containerClient.GetParentBlobServiceClient().AccountName)
-        // };
         return $"{_config["BlobStorage:Url"]}data/{fileData.BlobName}?{sasToken}";
     }
 }

@@ -1,6 +1,6 @@
 import { BlockBlobClient } from "@azure/storage-blob";
 
-const API_BASE_URL = "https://localhost:7064";
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
 export interface BlobUploadResponse {
   success: boolean;
@@ -45,6 +45,9 @@ export class BlobService {
         blockSize: 50 * 1024 * 1024, // 50MB chunks
         concurrency: 4,
         maxSingleShotSize: 50 * 1024 * 1024,
+        blobHTTPHeaders: {
+          blobContentType: file.type
+        },
         onProgress: (progress) => {
           console.log(`Uploaded ${progress.loadedBytes} of ${file.size} bytes`);
         },
